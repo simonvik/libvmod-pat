@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <cache/cache.h>
 #include <string.h>
+#include <stdbool.h>
+#include <ctype.h>
+
 
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
@@ -54,8 +57,11 @@ int token_authenticatorinput(struct token *t, char *buff, size_t l)
 	vbe16enc(p, t->token_type);
 	p += 2;
 
+	// Client generated nonce
 	memcpy(p, t->nonce, 32);
 	p += 32;
+
+
 	memcpy(p, t->context, 32);
 	p += 32;
 	memcpy(p, t->key_id, 32);
@@ -63,16 +69,17 @@ int token_authenticatorinput(struct token *t, char *buff, size_t l)
 	return 0;
 }
 
-int token_unmarchal(struct token *t, char *d, size_t l)
+int token_unmarchal(struct token *t, const char *d, size_t l)
 {
 	if (l != TOKEN_SIZE)
 		return -1;
 
-	char *p = d;
+	const char *p = d;
 
 	t->token_type = vbe16dec(p);
 	p += 2;
 
+	// Client generated nonce
 	memcpy(t->nonce, p, 32);
 	p += 32;
 	memcpy(t->context, p, 32);
@@ -142,14 +149,18 @@ int hash_nonce(const char *nonce, char *buf){
 	return 0;
 }
 
-int token_verify(struct token *t, const unsigned char *key, int keyLength)
+bool token_verify(struct token *t, const unsigned char *key, int keyLength, VRT_CTX)
 {
 	// temp buffer
 	unsigned char buffer[256];
 	char auth_input[AUTHINPUT_SIZE] = {0};
 
-	if (token_authenticatorinput(t, auth_input, sizeof(auth_input)))
-		return -1;
+	if (token_authenticatorinput(t, auth_input, sizeof(auth_input)) != 0)
+		return false;
+	
+	VSLb(ctx->vsl, SLT_VCL_Log, "Type: %i", t->token_type);
+
+
 
 	// apply SHA-1 hash function
 	unsigned char hashed[48] = {0};
@@ -161,6 +172,8 @@ int token_verify(struct token *t, const unsigned char *key, int keyLength)
 	RSA *rsa = d2i_RSA_PUBKEY(NULL, &key, keyLength);
 
 	RSA_public_decrypt(256, t->authenticator, buffer, rsa, RSA_NO_PADDING);
+	VSLb(ctx->vsl, SLT_VCL_Log, "Im here 3");
+
 
 	return RSA_verify_PKCS1_PSS(rsa, hashed, EVP_sha384(), buffer, 48) == 1;
 }
@@ -202,9 +215,47 @@ vmod_pat__fini(struct vmod_pat_pat **patp)
 	FREE_OBJ(pat);
 }
 
-VCL_STRING v_matchproto_()
+VCL_BOOL v_matchproto_()
 vmod_pat_validate_header(VRT_CTX, struct vmod_pat_pat *pat, struct vmod_priv *priv, VCL_STRING hdr){
-	return "vmod-pat";
+	const char *p;
+	struct token t;
+	int hdr_l;
+	size_t l;
+
+	p = hdr;
+
+	char buf[AUTHINPUT_SIZE];
+	char base64_dec[1000*4];
+	if(hdr == NULL)
+		return false;
+
+	if(strlen(hdr) > 1000)
+		return false;
+
+
+	if(strncmp("PrivateToken", p, 12))
+		return false;
+
+	p+=12;
+
+	while(isspace(*p))
+		p++;
+
+	if(strncmp("token=", p, 6))
+		return false;
+
+	p+=6;
+
+	VSLb(ctx->vsl, SLT_VCL_Log, "%s", p);
+
+	l = base64url_decode(base64_dec, p);
+
+	if(token_unmarchal(&t, base64_dec, l) != 0)
+		return false;
+	
+	return token_verify(&t, pat->basic_key, pat->basic_key_length, ctx);
+
+
 }
 VCL_STRING v_matchproto_()
 	vmod_pat_generate_token_header(VRT_CTX, struct vmod_pat_pat *pat, struct arg_vmod_pat_pat_generate_token_header *opt)
@@ -233,7 +284,7 @@ VCL_STRING v_matchproto_()
 
 	u = WS_ReserveAll(ctx->ws); /* Reserve some work space */
 	p = ctx->ws->f;				/* Front of workspace area */
-	v = snprintf(p, u, "PrivateToken challenge=%s token-key=%s", buf2, buf);
+	v = snprintf(p, u, "PrivateToken challenge=%s, token-key=%s, max_aget=10", buf2, buf);
 	v++;
 	if (v > u)
 	{
