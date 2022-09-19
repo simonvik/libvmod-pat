@@ -145,7 +145,7 @@ int hash_nonce(const char *nonce, char *buf)
 	return 0;
 }
 
-bool token_verify(struct token *t, const unsigned char *key, int keyLength, VRT_CTX)
+bool token_verify(struct token *t, const unsigned char *key, int keyLength)
 {
 	// temp buffer
 	unsigned char buffer[256];
@@ -154,9 +154,6 @@ bool token_verify(struct token *t, const unsigned char *key, int keyLength, VRT_
 	if (token_authenticatorinput(t, auth_input, sizeof(auth_input)) != 0)
 		return false;
 
-	VSLb(ctx->vsl, SLT_VCL_Log, "Type: %i", t->token_type);
-
-	// apply SHA-1 hash function
 	unsigned char hashed[48] = {0};
 	SHA512_CTX c;
 	SHA384_Init(&c);
@@ -166,7 +163,6 @@ bool token_verify(struct token *t, const unsigned char *key, int keyLength, VRT_
 	RSA *rsa = d2i_RSA_PUBKEY(NULL, &key, keyLength);
 
 	RSA_public_decrypt(256, t->authenticator, buffer, rsa, RSA_NO_PADDING);
-	VSLb(ctx->vsl, SLT_VCL_Log, "Im here 3");
 
 	return RSA_verify_PKCS1_PSS(rsa, hashed, EVP_sha384(), buffer, 48) == 1;
 }
@@ -261,14 +257,12 @@ VCL_BOOL v_matchproto_()
 
 	p += 6;
 
-	VSLb(ctx->vsl, SLT_VCL_Log, "%s", p);
-
 	l = base64url_decode(base64_dec, p);
 
 	if (token_unmarchal(&t, base64_dec, l) != 0)
 		return false;
 
-	if (!token_verify(&t, pat->basic_key, pat->basic_key_length, ctx))
+	if (!token_verify(&t, pat->basic_key, pat->basic_key_length))
 		return false;
 
 	if (opt->nonce != NULL)
