@@ -1,22 +1,17 @@
 varnishtest "test vmod-pat"
 
-server s1 {
-	rxreq
-	txresp
-} -start
-
 varnish v1 -vcl+backend {
+		backend be none;
+
         import pat;
 
 		sub vcl_init {
 			new ppat = pat.pat("MIIBUjA9BgkqhkiG9w0BAQowMKANMAsGCWCGSAFlAwQCAqEaMBgGCSqGSIb3DQEBCDALBglghkgBZQMEAgKiAwIBMAOCAQ8AMIIBCgKCAQEAysdWcET7XEBJbjsM-QPnk89xWDkmQy-hPRdvbbXiwMtWc8D2WJPfaE0diWcjbKjpJCJww_gzDIZgtTKjCs8Grya4sTCHCdGbC-_pDB4I5thB50fGQif5jLQ5wHY9J6ZGITmfcBGpZa1jT56jwcJOStgIWsvM5_vPt82NkzvsxAqQlu0x6XJ2X4htfslcRceLekxhYk-4qIzapMeU9fOvKX8002AZPYnF9H1aJhvwSGfO_vmpw0MIXB5ULOlsGnYSFgxnRcukfetBtUP7BOG6-IhOCowsfN_ExGQ6KQV89gf4nvr4WXWF6de20vnY13cFdw-iN3FVIQcqjEuvLgkqJwIDAQAB");
 		}
 
-		sub vcl_recv {
-			set req.http.meo = ppat.validate_header(req.http.Authorization);
-		}
-
         sub vcl_deliver {
+			set resp.status = 401;
+			set resp.http.ok = ppat.validate_header(req.http.Authorization, "demo-pat.issuer.cloudflare.com", "devsn.se");
 	    	set resp.http.www-authenticate = ppat.generate_token_header("demo-pat.issuer.cloudflare.com","devsn.se");
         }
 } -start
@@ -24,6 +19,32 @@ varnish v1 -vcl+backend {
 client c1 {
 	txreq -hdr "Authorization: PrivateToken token=AAJJ1t07ZaYI6vKsy4S4AA8bIOcK32wj2Z_h_MnLh8YEZx0u0MGtmUGgpmasG-gv3Ve85S8bi4crWwFFv-uQsv18xI0EFHl_zA4Gm1zP0TGzwXgP8TzlUGO1-QPjT18_VVVl90GI5Xd_-fJQku7FqV0O2bE7ipUx2LsMb-cHz2v6poNwz0dOnrY5JN7YEkgItXypoezfvWTBnTjHj2dkh_9HizBsXccm34NLqORqM0L6Yk3bk3VQSO38VagjljQIzoySaW1kdZu_5g6pX9Y1tQMdhuXaBfQgig9BSXP00ZM9sBlnNLcNfZG_cK4yw9ZfAbgU-VDfvv_HBGQEvpZmVyqtsO_OzpD1KWcINZgf0gOUkyi7kQSeO575IhmG9U4WaSGHFhht-zq0vWZrWCNXzAPiAeN-YPVIS6qY4KlLcQ9Cijap8ohyCwcugtEAqNQI7KrMHMG4d1nTWxeiCeLbKTfQ"
 	rxresp
-	expect resp.status == 200
-	expect resp.http.www-authenticate == "PrivateToken challenge=AAIAHmRlbW8tcGF0Lmlzc3Vlci5jbG91ZGZsYXJlLmNvbQAAIGRlbW8tcGF0LnJlc2VhcmNoLmNsb3VkZmxhcmUuY29t token-key=MIIBUjA9BgkqhkiG9w0BAQowMKANMAsGCWCGSAFlAwQCAqEaMBgGCSqGSIb3DQEBCDALBglghkgBZQMEAgKiAwIBMAOCAQ8AMIIBCgKCAQEAysdWcET7XEBJbjsM-QPnk89xWDkmQy-hPRdvbbXiwMtWc8D2WJPfaE0diWcjbKjpJCJww_gzDIZgtTKjCs8Grya4sTCHCdGbC-_pDB4I5thB50fGQif5jLQ5wHY9J6ZGITmfcBGpZa1jT56jwcJOStgIWsvM5_vPt82NkzvsxAqQlu0x6XJ2X4htfslcRceLekxhYk-4qIzapMeU9fOvKX8002AZPYnF9H1aJhvwSGfO_vmpw0MIXB5ULOlsGnYSFgxnRcukfetBtUP7BOG6-IhOCowsfN_ExGQ6KQV89gf4nvr4WXWF6de20vnY13cFdw-iN3FVIQcqjEuvLgkqJwIDAQAB"
+	expect resp.status == 401
+	expect resp.http.www-authenticate == "PrivateToken challenge=AAIAHmRlbW8tcGF0Lmlzc3Vlci5jbG91ZGZsYXJlLmNvbQAACGRldnNuLnNl, token-key=MIIBUjA9BgkqhkiG9w0BAQowMKANMAsGCWCGSAFlAwQCAqEaMBgGCSqGSIb3DQEBCDALBglghkgBZQMEAgKiAwIBMAOCAQ8AMIIBCgKCAQEAysdWcET7XEBJbjsM-QPnk89xWDkmQy-hPRdvbbXiwMtWc8D2WJPfaE0diWcjbKjpJCJww_gzDIZgtTKjCs8Grya4sTCHCdGbC-_pDB4I5thB50fGQif5jLQ5wHY9J6ZGITmfcBGpZa1jT56jwcJOStgIWsvM5_vPt82NkzvsxAqQlu0x6XJ2X4htfslcRceLekxhYk-4qIzapMeU9fOvKX8002AZPYnF9H1aJhvwSGfO_vmpw0MIXB5ULOlsGnYSFgxnRcukfetBtUP7BOG6-IhOCowsfN_ExGQ6KQV89gf4nvr4WXWF6de20vnY13cFdw-iN3FVIQcqjEuvLgkqJwIDAQAB, max_aget=10"
+	expect resp.http.ok == true
+} -run
+
+
+client c2 {
+	txreq -hdr "Authorization: PrivateToken token=BAJJ1t07ZaYI6vKsy4S4AA8bIOcK32wj2Z_h_MnLh8YEZx0u0MGtmUGgpmasG-gv3Ve85S8bi4crWwFFv-uQsv18xI0EFHl_zA4Gm1zP0TGzwXgP8TzlUGO1-QPjT18_VVVl90GI5Xd_-fJQku7FqV0O2bE7ipUx2LsMb-cHz2v6poNwz0dOnrY5JN7YEkgItXypoezfvWTBnTjHj2dkh_9HizBsXccm34NLqORqM0L6Yk3bk3VQSO38VagjljQIzoySaW1kdZu_5g6pX9Y1tQMdhuXaBfQgig9BSXP00ZM9sBlnNLcNfZG_cK4yw9ZfAbgU-VDfvv_HBGQEvpZmVyqtsO_OzpD1KWcINZgf0gOUkyi7kQSeO575IhmG9U4WaSGHFhht-zq0vWZrWCNXzAPiAeN-YPVIS6qY4KlLcQ9Cijap8ohyCwcugtEAqNQI7KrMHMG4d1nTWxeiCeLbKTfQ"
+	rxresp
+	expect resp.status == 401
+	expect resp.http.www-authenticate == "PrivateToken challenge=AAIAHmRlbW8tcGF0Lmlzc3Vlci5jbG91ZGZsYXJlLmNvbQAACGRldnNuLnNl, token-key=MIIBUjA9BgkqhkiG9w0BAQowMKANMAsGCWCGSAFlAwQCAqEaMBgGCSqGSIb3DQEBCDALBglghkgBZQMEAgKiAwIBMAOCAQ8AMIIBCgKCAQEAysdWcET7XEBJbjsM-QPnk89xWDkmQy-hPRdvbbXiwMtWc8D2WJPfaE0diWcjbKjpJCJww_gzDIZgtTKjCs8Grya4sTCHCdGbC-_pDB4I5thB50fGQif5jLQ5wHY9J6ZGITmfcBGpZa1jT56jwcJOStgIWsvM5_vPt82NkzvsxAqQlu0x6XJ2X4htfslcRceLekxhYk-4qIzapMeU9fOvKX8002AZPYnF9H1aJhvwSGfO_vmpw0MIXB5ULOlsGnYSFgxnRcukfetBtUP7BOG6-IhOCowsfN_ExGQ6KQV89gf4nvr4WXWF6de20vnY13cFdw-iN3FVIQcqjEuvLgkqJwIDAQAB, max_aget=10"
+	expect resp.http.ok == false
+} -run
+
+client c3 {
+	txreq -hdr "Authorization: PrivateToken token=P8TzlUGO1-QPj0ZM9sBl-zq0vWZrWCNXzAPiAeN-YPVIS6qY4KlLcQ9Cijap8ohyCwcugtEAqNQI7KrMHMG4d1nTWxeiCeLbKTfQ"
+	rxresp
+	expect resp.status == 401
+	expect resp.http.www-authenticate == "PrivateToken challenge=AAIAHmRlbW8tcGF0Lmlzc3Vlci5jbG91ZGZsYXJlLmNvbQAACGRldnNuLnNl, token-key=MIIBUjA9BgkqhkiG9w0BAQowMKANMAsGCWCGSAFlAwQCAqEaMBgGCSqGSIb3DQEBCDALBglghkgBZQMEAgKiAwIBMAOCAQ8AMIIBCgKCAQEAysdWcET7XEBJbjsM-QPnk89xWDkmQy-hPRdvbbXiwMtWc8D2WJPfaE0diWcjbKjpJCJww_gzDIZgtTKjCs8Grya4sTCHCdGbC-_pDB4I5thB50fGQif5jLQ5wHY9J6ZGITmfcBGpZa1jT56jwcJOStgIWsvM5_vPt82NkzvsxAqQlu0x6XJ2X4htfslcRceLekxhYk-4qIzapMeU9fOvKX8002AZPYnF9H1aJhvwSGfO_vmpw0MIXB5ULOlsGnYSFgxnRcukfetBtUP7BOG6-IhOCowsfN_ExGQ6KQV89gf4nvr4WXWF6de20vnY13cFdw-iN3FVIQcqjEuvLgkqJwIDAQAB, max_aget=10"
+	expect resp.http.ok == false
+} -run
+
+client c4 {
+	txreq -hdr "Authorization: PrivateToken token="
+	rxresp
+	expect resp.status == 401
+	expect resp.http.www-authenticate == "PrivateToken challenge=AAIAHmRlbW8tcGF0Lmlzc3Vlci5jbG91ZGZsYXJlLmNvbQAACGRldnNuLnNl, token-key=MIIBUjA9BgkqhkiG9w0BAQowMKANMAsGCWCGSAFlAwQCAqEaMBgGCSqGSIb3DQEBCDALBglghkgBZQMEAgKiAwIBMAOCAQ8AMIIBCgKCAQEAysdWcET7XEBJbjsM-QPnk89xWDkmQy-hPRdvbbXiwMtWc8D2WJPfaE0diWcjbKjpJCJww_gzDIZgtTKjCs8Grya4sTCHCdGbC-_pDB4I5thB50fGQif5jLQ5wHY9J6ZGITmfcBGpZa1jT56jwcJOStgIWsvM5_vPt82NkzvsxAqQlu0x6XJ2X4htfslcRceLekxhYk-4qIzapMeU9fOvKX8002AZPYnF9H1aJhvwSGfO_vmpw0MIXB5ULOlsGnYSFgxnRcukfetBtUP7BOG6-IhOCowsfN_ExGQ6KQV89gf4nvr4WXWF6de20vnY13cFdw-iN3FVIQcqjEuvLgkqJwIDAQAB, max_aget=10"
+	expect resp.http.ok == false
 } -run
