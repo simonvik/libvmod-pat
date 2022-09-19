@@ -87,18 +87,16 @@ int token_unmarchal(struct token *t, const char *d, size_t l)
 	return 0;
 }
 
-size_t tokenchallenge_marchal(uint16_t token_type, const char *issuer, const char *nonce, const char *originfo, char *buf, int buflen)
+size_t tokenchallenge_marchal(uint16_t token_type, const char *issuer, const char *nonce, size_t nonce_length, const char *originfo, char *buf, int buflen)
 {
 	AN(issuer);
 	AN(originfo);
 
-	int issuer_length, originfo_length, nonce_length;
+	int issuer_length, originfo_length;
 	char *p;
 
 	issuer_length = strlen(issuer);
 	originfo_length = strlen(originfo);
-	if (nonce != NULL)
-		nonce_length = 32;
 
 	if (buflen < 2 + 2 + issuer_length + 1 + nonce_length + 2 + originfo_length)
 		return -1;
@@ -114,7 +112,7 @@ size_t tokenchallenge_marchal(uint16_t token_type, const char *issuer, const cha
 	memcpy(p, issuer, issuer_length);
 	p += issuer_length;
 
-	if (nonce != NULL && *nonce != '\0')
+	if (nonce_length)
 	{
 		*p = nonce_length;
 		p++;
@@ -211,16 +209,16 @@ VCL_VOID v_matchproto_()
 	FREE_OBJ(pat);
 }
 
-bool compare_challenges(char *a, size_t a_l, char *b) {
+bool compare_challenges(char *a, size_t a_l, char *b)
+{
 	char buf[32] = {0};
-
 
 	SHA256_CTX c;
 	SHA256_Init(&c);
 	SHA256_Update(&c, a, a_l);
 	SHA256_Final(buf, &c);
 
-	if(memcmp(buf, b, 32) == 0)
+	if (memcmp(buf, b, 32) == 0)
 		return true;
 
 	return false;
@@ -240,6 +238,10 @@ VCL_BOOL v_matchproto_()
 	char buf[AUTHINPUT_SIZE];
 	char token_challenge_buf[1000];
 	char base64_dec[1000 * 4];
+
+	if (opt->issuer == NULL || opt->origin == NULL)
+		return false;
+
 	if (opt->hdr == NULL)
 		return false;
 
@@ -266,13 +268,13 @@ VCL_BOOL v_matchproto_()
 	if (token_unmarchal(&t, base64_dec, l) != 0)
 		return false;
 
-	if(!token_verify(&t, pat->basic_key, pat->basic_key_length, ctx))
+	if (!token_verify(&t, pat->basic_key, pat->basic_key_length, ctx))
 		return false;
 
 	if (opt->nonce != NULL)
 		hash_nonce(opt->nonce, hash);
 
-	l = tokenchallenge_marchal(2, opt->issuer, hash, opt->origin, token_challenge_buf, 1000);
+	l = tokenchallenge_marchal(2, opt->issuer, hash, opt->nonce != NULL ? 32 : 0, opt->origin, token_challenge_buf, 1000);
 
 	return compare_challenges(token_challenge_buf, l, t.context);
 }
@@ -294,14 +296,14 @@ VCL_STRING v_matchproto_()
 	if (opt->nonce != NULL)
 		hash_nonce(opt->nonce, hash);
 
-	l = tokenchallenge_marchal(2, opt->issuer, hash, opt->origin, token_challenge_buf, 1000);
+	l = tokenchallenge_marchal(2, opt->issuer, hash, opt->nonce != NULL ? 32 : 0, opt->origin, token_challenge_buf, 1000);
 
 	base64url_encode(buf, pat->basic_key, pat->basic_key_length);
 	base64url_encode(buf2, token_challenge_buf, l);
 
 	u = WS_ReserveAll(ctx->ws); /* Reserve some work space */
 	p = ctx->ws->f;				/* Front of workspace area */
-	v = snprintf(p, u, "PrivateToken challenge=%s, token-key=%s, max_age=10", buf2, buf);
+	v = snprintf(p, u, "PrivateToken challenge=%s, token-key=%s, max_age=1", buf2, buf);
 	v++;
 	if (v > u)
 	{
