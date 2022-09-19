@@ -1,4 +1,4 @@
-AM_CFLAGS = $(VARNISHAPI_CFLAGS)
+AM_CFLAGS = $(VARNISHAPI_CFLAGS) $(VARNISHAPI_LIBS) -lcurl -ljansson -lcrypto
 
 # Modules
 
@@ -6,7 +6,7 @@ vmod_LTLIBRARIES = \
 	libvmod_pat.la
 
 libvmod_pat_la_LDFLAGS = $(VMOD_LDFLAGS)
-libvmod_pat_la_SOURCES = vmod_pat.c
+libvmod_pat_la_SOURCES = vmod_pat.c base64_url.c
 nodist_libvmod_pat_la_SOURCES = \
 	vcc_pat_if.c \
 	vcc_pat_if.h

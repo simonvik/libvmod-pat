@@ -2,7 +2,7 @@ AC_PREREQ([2.68])
 AC_INIT([libvmod-pat], [0.1])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE([1.12 -Wall -Werror foreign parallel-tests])
 AM_SILENT_RULES([yes])
@@ -16,7 +16,7 @@ AC_ARG_WITH([rst2man],
 		[--with-rst2man=PATH],
 		[Location of rst2man (auto)]),
 	[RST2MAN="$withval"],
-	AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], []))
+	[AC_CHECK_PROGS(RST2MAN, [rst2man rst2man.py], [])])
 
 VARNISH_PREREQ([6.0.0])
 VARNISH_VMODS([pat])
