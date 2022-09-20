@@ -40,3 +40,7 @@ https://www.fastly.com/blog/private-access-tokens-stepping-into-the-privacy-resp
 https://www.ietf.org/archive/id/draft-ietf-privacypass-architecture-06.html
 
 https://developer.apple.com/news/?id=huqjyh7k
+
+https://datatracker.ietf.org/wg/privacypass/documents/
+
+https://www.ietf.org/archive/id/draft-privacypass-rate-limit-tokens-03.html
