@@ -9,7 +9,6 @@ jobs:
       run: |
        sudo apt-get update -q
        sudo apt-get install -qq apt-transport-https python-docutils libssl-dev
-       sudo apt-get build-dep -q varnish
        curl -s https://packagecloud.io/install/repositories/varnishcache/varnish-weekly/script.deb.sh | sudo bash
        sudo apt-get -q update
        sudo apt-get install varnish varnish-dev
