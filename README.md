@@ -20,14 +20,18 @@ sub vcl_recv {
 
     if(ppat.validate_header(req.http.Authorization, "example.com", "NONCE")){
         return(synth(200, "Woho, authed"));
+    }else{
+        return(synth(601, "Please auth"));
     }
 }
 
-sub vcl_deliver {
+sub vcl_synth {
     # Using demo-pat.issuer.cloudflare.com issuer as an example
     
-    set resp.status = 401;
-    set resp.http.www-authenticate = ppat.generate_token_header("example.com", "NONCE");
+    if(resp.status == 601) {
+        set resp.status = 401;
+        set resp.http.www-authenticate = ppat.generate_token_header("example.com", "NONCE");
+    }
 }
 
 ```
