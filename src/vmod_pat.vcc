@@ -2,7 +2,7 @@ $Module pat 3 "Varnish pat Module"
 
 
 
-$Object pat(PRIV_VCL, STRING)
-$Method BOOL .validate_header(PRIV_VCL, STRING hdr, STRING issuer, STRING origin, [STRING nonce])
-$Method STRING .generate_token_header(PRIV_VCL, STRING issuer, STRING origin, [STRING nonce])
+$Object pat(PRIV_VCL, STRING issuer, STRING public_key)
+$Method BOOL .validate_header(PRIV_VCL, STRING hdr, STRING origin, [STRING nonce])
+$Method STRING .generate_token_header(PRIV_VCL, STRING origin, [STRING nonce])
 

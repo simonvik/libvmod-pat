@@ -29,6 +29,7 @@ struct vmod_pat_pat
 	struct vsc_seg *vsc_seg;
 	char *basic_key;
 	size_t basic_key_length;
+	char *issuer;
 };
 
 struct token
@@ -168,7 +169,7 @@ bool token_verify(struct token *t, const unsigned char *key, int keyLength)
 }
 
 VCL_VOID v_matchproto_()
-	vmod_pat__init(VRT_CTX, struct vmod_pat_pat **patp, const char *vcl_name, struct vmod_priv *priv, VCL_STRING basic_key)
+	vmod_pat__init(VRT_CTX, struct vmod_pat_pat **patp, const char *vcl_name, struct vmod_priv *priv, VCL_STRING issuer, VCL_STRING basic_key)
 {
 	char buff[1024];
 
@@ -187,6 +188,8 @@ VCL_VOID v_matchproto_()
 	pat->basic_key_length = base64url_decode(buff, (unsigned char *)basic_key);
 	pat->basic_key = malloc(sizeof(char) * pat->basic_key_length);
 	memcpy(pat->basic_key, buff, pat->basic_key_length);
+
+	pat->issuer = strdup(issuer);
 
 	*patp = pat;
 
@@ -235,7 +238,7 @@ VCL_BOOL v_matchproto_()
 	char token_challenge_buf[1000];
 	char base64_dec[1000 * 4];
 
-	if (opt->issuer == NULL || opt->origin == NULL)
+	if (pat->issuer == NULL || opt->origin == NULL)
 		return false;
 
 	if (opt->hdr == NULL)
@@ -271,7 +274,7 @@ VCL_BOOL v_matchproto_()
 	if (opt->nonce != NULL)
 		hash_nonce(opt->nonce, hash);
 
-	l = tokenchallenge_marchal(2, opt->issuer, hash, opt->nonce != NULL ? 32 : 0, opt->origin, token_challenge_buf, 1000);
+	l = tokenchallenge_marchal(2, pat->issuer, hash, opt->nonce != NULL ? 32 : 0, opt->origin, token_challenge_buf, 1000);
 
 	return compare_challenges(token_challenge_buf, l, t.context);
 }
@@ -287,13 +290,13 @@ VCL_STRING v_matchproto_()
 	unsigned u, v;
 	size_t l;
 
-	if (opt->issuer == NULL || opt->origin == NULL)
+	if (pat->issuer == NULL || opt->origin == NULL)
 		return "";
 
 	if (opt->nonce != NULL)
 		hash_nonce(opt->nonce, hash);
 
-	l = tokenchallenge_marchal(2, opt->issuer, hash, opt->nonce != NULL ? 32 : 0, opt->origin, token_challenge_buf, 1000);
+	l = tokenchallenge_marchal(2, pat->issuer, hash, opt->nonce != NULL ? 32 : 0, opt->origin, token_challenge_buf, 1000);
 
 	base64url_encode(buf, pat->basic_key, pat->basic_key_length);
 	base64url_encode(buf2, token_challenge_buf, l);
