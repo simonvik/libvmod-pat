@@ -67,7 +67,7 @@ int token_authenticatorinput(struct token *t, char *buff, size_t l)
 	return 0;
 }
 
-int token_unmarchal(struct token *t, const char *d, size_t l)
+int token_unmarshal(struct token *t, const char *d, size_t l)
 {
 	if (l != TOKEN_SIZE)
 		return -1;
@@ -89,7 +89,7 @@ int token_unmarchal(struct token *t, const char *d, size_t l)
 	return 0;
 }
 
-size_t tokenchallenge_marchal(uint16_t token_type, const char *issuer, const char *nonce, size_t nonce_length, const char *originfo, char *buf, int buflen)
+size_t tokenchallenge_marshal(uint16_t token_type, const char *issuer, const char *nonce, size_t nonce_length, const char *originfo, char *buf, int buflen)
 {
 	AN(issuer);
 	AN(originfo);
@@ -270,7 +270,7 @@ VCL_BOOL v_matchproto_()
 
 	l = base64url_decode(base64_dec, p);
 
-	if (token_unmarchal(&t, base64_dec, l) != 0)
+	if (token_unmarshal(&t, base64_dec, l) != 0)
 		return false;
 
 	if (t.token_type != 0x02)
@@ -282,7 +282,7 @@ VCL_BOOL v_matchproto_()
 	if (opt->nonce != NULL)
 		hash_nonce(opt->nonce, hash);
 
-	l = tokenchallenge_marchal(2, pat->issuer, hash, opt->nonce != NULL ? 32 : 0, opt->origin, token_challenge_buf, 1000);
+	l = tokenchallenge_marshal(2, pat->issuer, hash, opt->nonce != NULL ? 32 : 0, opt->origin, token_challenge_buf, 1000);
 
 	return compare_challenges(token_challenge_buf, l, t.context);
 }
@@ -304,7 +304,7 @@ VCL_STRING v_matchproto_()
 	if (opt->nonce != NULL)
 		hash_nonce(opt->nonce, hash);
 
-	l = tokenchallenge_marchal(2, pat->issuer, hash, opt->nonce != NULL ? 32 : 0, opt->origin, token_challenge_buf, 1000);
+	l = tokenchallenge_marshal(2, pat->issuer, hash, opt->nonce != NULL ? 32 : 0, opt->origin, token_challenge_buf, 1000);
 
 	base64url_encode(buf, pat->basic_key, pat->basic_key_length);
 	base64url_encode(buf2, token_challenge_buf, l);
