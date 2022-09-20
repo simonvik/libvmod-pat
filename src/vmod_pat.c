@@ -201,6 +201,12 @@ VCL_VOID v_matchproto_()
 {
 	struct vmod_pat_pat *pat;
 
+	free(pat->basic_key);
+	free(pat->issuer);
+
+	pat->basic_key = NULL;
+	pat->issuer = NULL;
+
 	AN(*patp);
 	pat = *patp;
 	*patp = NULL;
