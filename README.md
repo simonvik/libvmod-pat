@@ -13,7 +13,7 @@ sub vcl_init {
     new ppat = pat.pat(
         issuer = "demo-pat.issuer.cloudflare.com", 
         public_key = "MIIBUjA9BgkqhkiG9w0BAQowMKANMAsGCWCGSAFlAwQCAqEaMBgGCSqGSIb3DQEBCDALBglghkgBZQMEAgKiAwIBMAOCAQ8AMIIBCgKCAQEAysdWcET7XEBJbjsM-QPnk89xWDkmQy-hPRdvbbXiwMtWc8D2WJPfaE0diWcjbKjpJCJww_gzDIZgtTKjCs8Grya4sTCHCdGbC-_pDB4I5thB50fGQif5jLQ5wHY9J6ZGITmfcBGpZa1jT56jwcJOStgIWsvM5_vPt82NkzvsxAqQlu0x6XJ2X4htfslcRceLekxhYk-4qIzapMeU9fOvKX8002AZPYnF9H1aJhvwSGfO_vmpw0MIXB5ULOlsGnYSFgxnRcukfetBtUP7BOG6-IhOCowsfN_ExGQ6KQV89gf4nvr4WXWF6de20vnY13cFdw-iN3FVIQcqjEuvLgkqJwIDAQAB",
-        max_age=10
+        max_age = 10
     );
 }
 
