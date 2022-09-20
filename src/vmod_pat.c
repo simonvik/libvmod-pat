@@ -11,7 +11,7 @@
 #include <openssl/sha.h>
 
 #include <openssl/x509.h>
-#include <curl/curl.h>
+
 
 #include "vend.h" // For some reason not shared
 #include "vqueue.h"

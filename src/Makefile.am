@@ -1,4 +1,4 @@
-AM_CFLAGS = $(VARNISHAPI_CFLAGS) $(VARNISHAPI_LIBS) -lcurl -ljansson -lcrypto
+AM_CFLAGS = $(VARNISHAPI_CFLAGS) $(VARNISHAPI_LIBS) -lcrypto
 
 # Modules
 
