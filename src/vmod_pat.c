@@ -14,7 +14,6 @@
 
 
 #include "vend.h" // For some reason not shared
-#include "vqueue.h"
 
 #include "vcc_pat_if.h"
 #include "base64_url.h"
