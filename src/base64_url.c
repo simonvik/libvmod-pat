@@ -78,8 +78,9 @@ size_t base64url_encode(unsigned char *encoded, const unsigned char *string, int
         {
             *p++ = basis_64[((string[i] & 0x3) << 4) | ((int)(string[i + 1] & 0xF0) >> 4)];
             *p++ = basis_64[((string[i + 1] & 0xF) << 2)];
-            *p++ = '=';
         }
+        *p++ = '=';
+
     }
 
     *p++ = '\0';
