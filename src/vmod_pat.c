@@ -262,6 +262,9 @@ VCL_BOOL v_matchproto_()
 	if (token_unmarchal(&t, base64_dec, l) != 0)
 		return false;
 
+	if (t.token_type != 0x02)
+		return false;
+
 	if (!token_verify(&t, pat->basic_key, pat->basic_key_length))
 		return false;
 
