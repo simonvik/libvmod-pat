@@ -2,7 +2,7 @@ $Module pat 3 "Varnish pat Module"
 
 
 
-$Object pat(PRIV_VCL, STRING issuer, STRING public_key)
+$Object pat(PRIV_VCL, STRING issuer, STRING public_key, [INT max_age=10])
 $Method BOOL .validate_header(PRIV_VCL, STRING hdr, STRING origin, [STRING nonce])
 $Method STRING .generate_token_header(PRIV_VCL, STRING origin, [STRING nonce])
 

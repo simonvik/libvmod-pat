@@ -30,6 +30,7 @@ struct vmod_pat_pat
 	char *basic_key;
 	size_t basic_key_length;
 	char *issuer;
+	int max_age;
 };
 
 struct token
@@ -169,7 +170,7 @@ bool token_verify(struct token *t, const unsigned char *key, int keyLength)
 }
 
 VCL_VOID v_matchproto_()
-	vmod_pat__init(VRT_CTX, struct vmod_pat_pat **patp, const char *vcl_name, struct vmod_priv *priv, VCL_STRING issuer, VCL_STRING basic_key)
+	vmod_pat__init(VRT_CTX, struct vmod_pat_pat **patp, const char *vcl_name, struct arg_vmod_pat_pat__init *opt)
 {
 	char buff[1024];
 
@@ -183,13 +184,14 @@ VCL_VOID v_matchproto_()
 	ALLOC_OBJ(pat, VMOD_PAT_MAGIC);
 	AN(pat);
 
-	key_length = strlen(basic_key);
+	key_length = strlen(opt->public_key);
 
-	pat->basic_key_length = base64url_decode(buff, (unsigned char *)basic_key);
+	pat->basic_key_length = base64url_decode(buff, (unsigned char *)opt->public_key);
 	pat->basic_key = malloc(sizeof(char) * pat->basic_key_length);
 	memcpy(pat->basic_key, buff, pat->basic_key_length);
 
-	pat->issuer = strdup(issuer);
+	pat->issuer = strdup(opt->issuer);
+	pat->max_age = opt->max_age;
 
 	*patp = pat;
 
@@ -309,7 +311,7 @@ VCL_STRING v_matchproto_()
 
 	u = WS_ReserveAll(ctx->ws); /* Reserve some work space */
 	p = ctx->ws->f;				/* Front of workspace area */
-	v = snprintf(p, u, "PrivateToken challenge=%s, token-key=%s, max_age=1", buf2, buf);
+	v = snprintf(p, u, "PrivateToken challenge=%s, token-key=%s, max_age=%i", buf2, buf, pat->max_age);
 	v++;
 	if (v > u)
 	{
