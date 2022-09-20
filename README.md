@@ -1,4 +1,4 @@
-# Varnish vmod for Private Access Tokens
+# Varnish vmod for Private Access Tokens (draft 6)
 
 This vmod implements support for type `0x0002` tokens used by apple devices.
 
