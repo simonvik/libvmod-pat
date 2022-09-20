@@ -37,6 +37,6 @@ https://blog.cloudflare.com/eliminating-captchas-on-iphones-and-macs-using-new-s
 
 https://www.fastly.com/blog/private-access-tokens-stepping-into-the-privacy-respecting-captcha-less
 
-https://www.ietf.org/archive/id/draft-ietf-privacypass-architecture-03.html
+https://www.ietf.org/archive/id/draft-ietf-privacypass-architecture-06.html
 
 https://developer.apple.com/news/?id=huqjyh7k
