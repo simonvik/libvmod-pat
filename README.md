@@ -7,7 +7,7 @@ This vmod implements support for type `0x0002` tokens used by apple devices.
 ```
 sub vcl_init {
 
-    # Init with public key, it will in the future fetch the directory
+    # Init with issuer, public key and max_age
     # Using demo-pat.issuer.cloudflare.com issuer as an example
 
     new ppat = pat.pat(
