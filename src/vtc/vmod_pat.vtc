@@ -3,7 +3,7 @@ varnishtest "test vmod-pat"
 varnish v1 -vcl+backend {
 		backend be none;
 
-        import pat;
+		import pat;
 
 		sub vcl_init {
 			new ppat = pat.pat(
@@ -13,11 +13,11 @@ varnish v1 -vcl+backend {
 			);
 		}
 
-        sub vcl_deliver {
+		sub vcl_deliver {
 			set resp.status = 401;
 			set resp.http.ok = ppat.validate_header(req.http.Authorization, "devsn.se", "meo");
-	    	set resp.http.www-authenticate = ppat.generate_token_header("devsn.se", "meo");
-        }
+			set resp.http.www-authenticate = ppat.generate_token_header("devsn.se", "meo");
+		}
 } -start
 
 client c1 {
