@@ -1,0 +1,16 @@
+on: [push]
+jobs:
+  build:
+  name: test vmod
+  runs-on: ubuntu-latest
+  steps:
+  - uses: actions/checkout@v2
+  - name: Build and check
+    run: |
+     sudo apt-get update -q
+     sudo apt-get install -qq apt-transport-https python-docutils
+     curl -s https://packagecloud.io/install/repositories/varnishcache/varnish-weekly/script.deb.sh | sudo bash
+     sudo apt-get -q update
+     sudo apt-get install varnish varnish-dev
+     make -j4
+     make check
